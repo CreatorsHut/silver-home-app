@@ -577,3 +577,7 @@ function NoticesContent() {
     </div>
   );
 }
+
+// 서버 사이드 렌더링 중 클라이언트 컴포넌트 함수 호출 방지
+export const dynamic = 'force-dynamic';
+export const generateViewport = null; // 서버에서 호출되지 않도록 설정

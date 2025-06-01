@@ -578,6 +578,11 @@ function NoticesContent() {
   );
 }
 
-// 서버 사이드 렌더링 중 클라이언트 컴포넌트 함수 호출 방지
-export const dynamic = 'force-dynamic';
-export const generateViewport = null; // 서버에서 호출되지 않도록 설정
+// 서버 사이드 렌더링 설정
+export const dynamic = "force-dynamic";
+
+// Next.js 설정 - 서버에서 클라이언트 함수를 호출하지 않도록 설정
+export const metadata = {
+  title: '공지사항 관리 - 실버홈',
+  description: '실버홈 공지사항 관리 페이지입니다.'
+};

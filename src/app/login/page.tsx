@@ -3,6 +3,8 @@
 // Next.js 15.3.3 호환성을 위한 페이지 설정
 // 페이지 구성 오류를 방지하기 위해 객체 형태로 내보내기
 export const config = {
+  runtime: 'edge',
+  regions: ['icn1'],
   dynamic: 'force-dynamic'
 };
 
@@ -51,19 +53,35 @@ export default function Login() {
   };
   
   // 이미 로그인되어 있는지 한 번만 확인 (에이지엔트 패턴)
+  // 무한 리디렉션 방지를 위한 쿠키 검사 추가
   if (typeof window !== 'undefined') {
     try {
-      const storedUser = localStorage.getItem('silverHomeUser');
-      if (storedUser) {
-        console.log('이미 로그인되어 있습니다. 대시보드로 이동합니다.');
-        window.location.href = '/dashboard';
-        // 로딩 메시지 표시
-        return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-            <p className="ml-3 text-lg">로그인 정보 확인 중...</p>
-          </div>
-        );
+      // 리디렉션 방지 쿠키 검사
+      const redirectCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('preventLoginRedirect='));
+      
+      if (redirectCookie) {
+        // 이미 리디렉션 시도 중이므로 더 이상 리디렉션하지 않음
+        console.log('리디렉션 방지 쿠키 발견, 리디렉션 취소');
+        // 쿠키 삭제 (한 번만 사용)
+        document.cookie = 'preventLoginRedirect=true; max-age=0; path=/';
+      } else {
+        // 로그인 상태 확인
+        const storedUser = localStorage.getItem('silverHomeUser');
+        if (storedUser) {
+          console.log('이미 로그인되어 있습니다. 대시보드로 이동합니다.');
+          // 리디렉션 방지 쿠키 설정 (30초 동안 유효)
+          document.cookie = 'preventLoginRedirect=true; max-age=30; path=/';
+          window.location.href = '/dashboard';
+          // 로딩 메시지 표시
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+              <p className="ml-3 text-lg">로그인 정보 확인 중...</p>
+            </div>
+          );
+        }
       }
     } catch (err) {
       console.error('로그인 상태 확인 오류:', err);

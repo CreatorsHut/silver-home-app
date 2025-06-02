@@ -1,17 +1,13 @@
 'use client'
 
 // Next.js 15.3.3 호환성을 위한 페이지 설정
-// 페이지 구성 오류를 방지하기 위해 객체 형태로 내보내기
 export const config = {
   runtime: 'edge',
   regions: ['icn1'],
   dynamic: 'force-dynamic'
 };
 
-// Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
-// 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaUser, FaLock } from 'react-icons/fa';
@@ -20,89 +16,119 @@ export default function Login() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   
-  // 간단한 유효성 검사 후 로그인 처리
+  // 테스트 계정 로그인 함수
+  const fillTestAccount = (type: string) => {
+    console.log(`테스트 계정 선택: ${type}`);
+    
+    if (isLoading) {
+      console.log('이미 로그인 처리 중, 테스트 계정 선택 무시');
+      return;
+    }
+    
+    // 테스트 계정 정보 설정
+    if (type === 'admin') {
+      setId('admin');
+      setPassword('1234');
+    } else if (type === 'resident') {
+      setId('resident');
+      setPassword('1234');
+    } else if (type === 'family') {
+      setId('family');
+      setPassword('1234');
+    }
+    
+    console.log(`테스트 계정 설정 완료: ${type}, ID: ${type}`);
+  };
+  
+  useEffect(() => {
+    // 무한 리디렉션 방지를 위한 로그 추가
+    console.log('로그인 페이지 마운트. 로그인 상태 확인 중...');
+    
+    // 로컬스토리지 확인은 클라이언트에서만 실행
+    if (typeof window !== 'undefined') {
+      // 리디렉션 방지 쿠키 검사
+      const preventRedirect = document.cookie.includes('preventLoginRedirect=true');
+      if (preventRedirect) {
+        console.log('리디렉션 방지 쿠키 발견, 리디렉션 취소');
+        // 쿠키 삭제
+        document.cookie = 'preventLoginRedirect=true; max-age=0; path=/';
+      }
+    }
+  }, []);
+  
+  // 로그인 처리
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    console.log('로그인 시도 - ID:', id);
     
-    // 간단한 유효성 검사
+    // 폼 검증
     if (!id || !password) {
       setError('아이디와 비밀번호를 모두 입력해주세요.');
       return;
     }
     
+    // 이미 로그인 처리 중이라면 중복 시도 방지
+    if (isLoading) {
+      console.log('이미 로그인 처리 중');
+      return;
+    }
+    
+    // 로딩 시작
+    setIsLoading(true);
+    
     try {
       // 로그인 시도
+      console.log('로그인 함수 호출 전');
       const success = login(id, password);
+      console.log('로그인 함수 결과:', success);
       
       if (success) {
-        console.log('로그인 성공, 대시보드로 이동');
-        // 클라이언트 사이드 리디렉션 - router 대신 window.location 사용
-        if (typeof window !== 'undefined') {
-          window.location.href = '/dashboard';
-        }
+        console.log('로그인 성공 - 대시보드로 이동 시도');
+        
+        // 리디렉션 방지 쿠키 설정 - 더 긴 유효 시간과 secure 속성 제거
+        const expires = new Date();
+        expires.setTime(expires.getTime() + 10000); // 10초 유효
+        document.cookie = `preventLoginRedirect=true; expires=${expires.toUTCString()}; path=/`;
+        
+        console.log('리디렉션 방지 쿠키 설정 완료:', document.cookie);
+        
+        // 지연 시간 증가
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            // localStorage에 사용자 정보가 제대로 저장되었는지 한 번 더 확인
+            try {
+              const storedUser = localStorage.getItem('silverHomeUser');
+              if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                console.log('리디렉션 전 저장된 사용자 확인:', userData.id, userData.role);
+              } else {
+                console.warn('리디렉션 전 사용자 정보가 localStorage에 없음');
+              }
+            } catch (e) {
+              console.error('localStorage 검사 오류:', e);
+            }
+            
+            console.log('리디렉션 실행 중: /dashboard');
+            window.location.href = '/dashboard';
+          }
+        }, 500);
       } else {
+        console.log('로그인 실패');
+        setIsLoading(false);
         setError('아이디 또는 비밀번호가 올바르지 않습니다.');
       }
     } catch (err) {
       console.error('로그인 오류:', err);
+      setIsLoading(false);
       setError('로그인 처리 중 오류가 발생했습니다.');
     }
   };
   
-  // 이미 로그인되어 있는지 한 번만 확인 (에이지엔트 패턴)
-  // 무한 리디렉션 방지를 위한 쿠키 검사 추가
-  if (typeof window !== 'undefined') {
-    try {
-      // 리디렉션 방지 쿠키 검사
-      const redirectCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('preventLoginRedirect='));
-      
-      if (redirectCookie) {
-        // 이미 리디렉션 시도 중이므로 더 이상 리디렉션하지 않음
-        console.log('리디렉션 방지 쿠키 발견, 리디렉션 취소');
-        // 쿠키 삭제 (한 번만 사용)
-        document.cookie = 'preventLoginRedirect=true; max-age=0; path=/';
-      } else {
-        // 로그인 상태 확인
-        const storedUser = localStorage.getItem('silverHomeUser');
-        if (storedUser) {
-          console.log('이미 로그인되어 있습니다. 대시보드로 이동합니다.');
-          // 리디렉션 방지 쿠키 설정 (30초 동안 유효)
-          document.cookie = 'preventLoginRedirect=true; max-age=30; path=/';
-          window.location.href = '/dashboard';
-          // 로딩 메시지 표시
-          return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-              <p className="ml-3 text-lg">로그인 정보 확인 중...</p>
-            </div>
-          );
-        }
-      }
-    } catch (err) {
-      console.error('로그인 상태 확인 오류:', err);
-      // 오류 발생 시 로컬스토리지 정리
-      localStorage.removeItem('silverHomeUser');
-    }
-  }
-  
-  // 테스트 계정 자동 입력
-  const fillTestAccount = (role: string) => {
-    if (role === 'admin') {
-      setId('admin-1');
-      setPassword('admin123');
-    } else if (role === 'resident') {
-      setId('resident-1');
-      setPassword('resident123');
-    } else if (role === 'family') {
-      setId('family-1');
-      setPassword('family123');
-    }
-  };
+  // 경고: 여기에 중복된 fillTestAccount 함수가 있었음
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -140,6 +166,7 @@ export default function Login() {
                   onChange={(e) => setId(e.target.value)}
                   className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-md text-lg placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"
                   placeholder="아이디 입력"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -160,6 +187,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-md text-lg placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"
                   placeholder="비밀번호 입력"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -182,9 +210,17 @@ export default function Login() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-md shadow-sm text-xl font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-md shadow-sm text-xl font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                disabled={isLoading}
               >
-                로그인
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin inline-block h-5 w-5 mr-3 border-2 border-white border-t-transparent rounded-full"></span>
+                    로그인 중...
+                  </>
+                ) : (
+                  '로그인'
+                )}
               </button>
             </div>
           </form>
@@ -202,19 +238,22 @@ export default function Login() {
             <div className="mt-6 grid grid-cols-1 gap-3">
               <button
                 onClick={() => fillTestAccount('resident')}
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-md font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-md font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                disabled={isLoading}
               >
                 입주자 계정
               </button>
               <button
                 onClick={() => fillTestAccount('family')}
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-md font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-md font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                disabled={isLoading}
               >
                 가족 계정
               </button>
               <button
                 onClick={() => fillTestAccount('admin')}
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-md font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-md font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                disabled={isLoading}
               >
                 관리자 계정
               </button>

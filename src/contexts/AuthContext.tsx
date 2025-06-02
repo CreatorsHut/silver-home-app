@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { User } from '@/data/models';
 
 // 인증 컨텍스트 타입 정의
@@ -20,7 +19,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
 
   // 컴포넌트 마운트 시 로컬 스토리지에서 사용자 정보 불러오기 및 초기 데이터 확인
   useEffect(() => {
@@ -82,8 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('silverHomeUser');
+      // 직접 URL 변경으로 리디렉션 처리
+      window.location.href = '/';
     }
-    router.push('/');
   };
 
   // 관리자 확인

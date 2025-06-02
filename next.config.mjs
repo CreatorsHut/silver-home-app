@@ -2,7 +2,6 @@
 const nextConfig = {
   // 기본 설정
   reactStrictMode: true,
-  swcMinify: true,
   
   // 빌드 오류 무시 설정
   eslint: {
@@ -24,16 +23,14 @@ const nextConfig = {
   
   // SSR 관련 문제 해결
   experimental: {
-    // 배포 시 정적 HTML 생성 비활성화
-    disableStaticImages: false,
-    // 서버 액션 활성화
-    serverActions: true,
-    // 최신 React 기능 사용
-    serverComponentsExternalPackages: [],
+    // 서버 액션 사용 설정 (boolean으로 지정)
+    serverActions: true
   },
   
+  // 서버 컴포넌트 외부 패키지 설정 (Next.js 15.3.3에서 이동됨)
+  serverExternalPackages: [],
+  
   // generateViewport 문제 해결을 위한 설정
-  // 클라이언트에서만 실행되어야 하는 기능을 서버에서 호출하지 않도록 설정
   compiler: {
     styledComponents: true,
   },

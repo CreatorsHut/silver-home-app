@@ -1,9 +1,15 @@
 'use client'
+
+// Next.js 15.3.3 호환성을 위한 페이지 설정
+// 페이지 구성 오류를 방지하기 위해 객체 형태로 내보내기
+export const config = {
+  dynamic: 'force-dynamic'
+};
   
 // Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
 // 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-export const dynamic = 'force-dynamic';
-export const dynamicParams = true;
+
+
 ;
 
 import { useEffect } from 'react';

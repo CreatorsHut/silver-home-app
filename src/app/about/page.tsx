@@ -152,117 +152,126 @@ export default function AboutPage() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+          {/* 스탠다드 플랜 */}
+          <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
             <div className="bg-gray-100 p-6 text-center border-b">
               <h3 className="text-2xl font-bold text-gray-800">스탠다드</h3>
-              <p className="text-gray-600 mt-2">기본 주거 및 케어 서비스</p>
+              <p className="text-gray-600 mt-2 h-12 flex items-center justify-center">기본 주거 및 케어 서비스</p>
               <div className="text-3xl font-bold text-red-600 my-4">월 200만원~</div>
             </div>
-            <div className="p-6">
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+            <div className="p-6 flex-grow flex flex-col justify-between">
+              <ul className="space-y-4">
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>1인실 주거 공간</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>일 3식 식사 제공</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>주간 건강 체크</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>기본 생활 지원 서비스</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>커뮤니티 활동 참여</span>
                 </li>
               </ul>
-              <Link href="/apply" className="block text-center bg-red-600 hover:bg-red-700 text-white py-2 rounded-md mt-6 transition-colors">
-                자세히 알아보기
-              </Link>
+              <div className="mt-8">
+                <Link href="/apply" className="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition-colors">
+                  자세히 알아보기
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow border-red-200">
+          {/* 프리미엄 플랜 */}
+          <div className="border rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow border-red-200 flex flex-col h-full">
             <div className="bg-red-50 p-6 text-center border-b border-red-200 relative">
               <div className="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 text-sm font-semibold rounded-bl">인기</div>
               <h3 className="text-2xl font-bold text-gray-800">프리미엄</h3>
-              <p className="text-gray-600 mt-2">고급 주거 및 맞춤형 케어</p>
+              <p className="text-gray-600 mt-2 h-12 flex items-center justify-center">고급 주거 및 맞춤형 케어</p>
               <div className="text-3xl font-bold text-red-600 my-4">월 300만원~</div>
             </div>
-            <div className="p-6">
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+            <div className="p-6 flex-grow flex flex-col justify-between">
+              <ul className="space-y-4">
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>넓은 1인실 또는 2인실 선택</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>맞춤형 식단 제공</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>주 2회 의료진 방문</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>24시간 개인 케어 서비스</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>모든 시설 우선 이용권</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>가족 방문 시 전용 공간 제공</span>
                 </li>
               </ul>
-              <Link href="/apply" className="block text-center bg-red-600 hover:bg-red-700 text-white py-2 rounded-md mt-6 transition-colors">
-                자세히 알아보기
-              </Link>
+              <div className="mt-8">
+                <Link href="/apply" className="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition-colors">
+                  자세히 알아보기
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+          {/* 디럭스 플랜 */}
+          <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
             <div className="bg-gray-100 p-6 text-center border-b">
               <h3 className="text-2xl font-bold text-gray-800">디럭스</h3>
-              <p className="text-gray-600 mt-2">최고급 주거 및 종합 케어</p>
+              <p className="text-gray-600 mt-2 h-12 flex items-center justify-center">최고급 주거 및 종합 케어</p>
               <div className="text-3xl font-bold text-red-600 my-4">월 400만원~</div>
             </div>
-            <div className="p-6">
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+            <div className="p-6 flex-grow flex flex-col justify-between">
+              <ul className="space-y-4">
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>럭셔리 스위트룸</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>전문 셰프의 맞춤 식사</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>매일 의료진 방문</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>24시간 전담 케어 매니저</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>개인 맞춤형 활동 프로그램</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
+                <li className="flex items-center min-h-[28px]">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                   <span>개인 차량 및 운전기사 서비스</span>
                 </li>
               </ul>
-              <Link href="/apply" className="block text-center bg-red-600 hover:bg-red-700 text-white py-2 rounded-md mt-6 transition-colors">
-                자세히 알아보기
-              </Link>
+              <div className="mt-8">
+                <Link href="/apply" className="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition-colors">
+                  자세히 알아보기
+                </Link>
+              </div>
             </div>
           </div>
         </div>

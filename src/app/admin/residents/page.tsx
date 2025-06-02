@@ -258,47 +258,54 @@ function ResidentsContent() {
         
         {/* 검색 및 필터링 */}
         {activeTab === 'residents' && (
-          <div className="mb-6 flex flex-wrap items-center justify-between">
-            <div className="w-full md:w-auto mb-4 md:mb-0">
-              <div className="relative rounded-md shadow-sm">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="이름, 이메일로 검색..."
-                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-4 py-2 sm:text-sm border-gray-300 rounded-md"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaSearch className="text-gray-400" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="w-full md:w-auto flex items-center space-x-4">
-              <label htmlFor="role-filter" className="block text-sm font-medium text-gray-700">
-                역할:
-              </label>
-              <select
-                id="role-filter"
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value as any)}
-                className="focus:ring-indigo-500 focus:border-indigo-500 block w-full py-2 pl-3 pr-10 text-base border-gray-300 rounded-md"
-              >
-                <option value="all">전체</option>
-                <option value="resident">입주자</option>
-                <option value="family">가족</option>
-              </select>
+          <div className="mb-6">
+            {/* 새로운 헤더 레이아웃 - 버튼은 오른쪽에 배치 */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-900">입주자 목록</h2>
               
               <button
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-3 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onClick={() => {
-                  // 신규 사용자 추가 모달 (미구현)
                   alert('신규 사용자 추가 기능 준비 중입니다.');
                 }}
               >
-                <FaUserPlus className="mr-2" />
+                <FaUserPlus className="mr-1.5" />
                 신규 추가
               </button>
+            </div>
+            
+            {/* 검색 및 필터 영역 */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="grow">
+                <div className="relative rounded-md shadow-sm">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="이름, 이메일로 검색..."
+                    className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-4 py-2 sm:text-sm border-gray-300 rounded-md"
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaSearch className="text-gray-400" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center shrink-0">
+                <label htmlFor="role-filter" className="block text-sm font-medium text-gray-700 mr-2">
+                  역할:
+                </label>
+                <select
+                  id="role-filter"
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value as any)}
+                  className="focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-10 text-sm border-gray-300 rounded-md"
+                >
+                  <option value="all">전체</option>
+                  <option value="resident">입주자</option>
+                  <option value="family">가족</option>
+                </select>
+              </div>
             </div>
           </div>
         )}

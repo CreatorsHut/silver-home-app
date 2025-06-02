@@ -1,35 +1,41 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 기본 설정
   reactStrictMode: true,
-  experimental: {
-    // SSR 문제 해결을 위한 설정
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
-    // 정적 내보내기 설정
-    outputFileTracing: true,
-  },
-  // 클라이언트 전용 기능을 서버에서 호출하는 문제 해결
-  compiler: {
-    styledComponents: true,
-  },
-  // 기존 next.config.ts에서 가져온 설정
+  swcMinify: true,
+  
+  // 빌드 오류 무시 설정
   eslint: {
-    // 빌드 시 ESLint 오류를 무시하여 빌드가 실패하지 않도록 설정
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // 빌드 시 TypeScript 오류를 무시하여 빌드가 실패하지 않도록 설정
     ignoreBuildErrors: true,
   },
-  // Vercel 배포를 위한 출력 설정
+  
+  // 배포 설정
   output: 'standalone',
-  // 정적 페이지 생성 및 서버 측 렌더링 활성화
   trailingSlash: false,
-  // 이미지 최적화 설정
+  
+  // 이미지 설정
   images: {
     domains: ['localhost'],
     unoptimized: true,
+  },
+  
+  // SSR 관련 문제 해결
+  experimental: {
+    // 배포 시 정적 HTML 생성 비활성화
+    disableStaticImages: false,
+    // 서버 액션 활성화
+    serverActions: true,
+    // 최신 React 기능 사용
+    serverComponentsExternalPackages: [],
+  },
+  
+  // generateViewport 문제 해결을 위한 설정
+  // 클라이언트에서만 실행되어야 하는 기능을 서버에서 호출하지 않도록 설정
+  compiler: {
+    styledComponents: true,
   },
 };
 

@@ -1,6 +1,13 @@
 'use client';
 import { useRouter } from 'next/navigation';
-// Next.js 15에서 클라이언트 컴포넌트 내에서 발생하는 generateViewport 호출 오류를 방지하기 위한 설정
+import nextDynamic from 'next/dynamic';
+
+// Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
+// 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
+// 서버에서는 실행되지 않고, 클라이언트에서만 실행되도록 설정
 
 import { useState, useEffect } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';

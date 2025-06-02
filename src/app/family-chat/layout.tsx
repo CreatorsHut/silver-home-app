@@ -6,7 +6,7 @@ export const metadata = {
   description: '실버홈 family-chat 페이지입니다.'
 };
 
-export default function Family-chatLayout({
+export default function FamilyChatLayout({
   children,
 }: {
   children: React.ReactNode;

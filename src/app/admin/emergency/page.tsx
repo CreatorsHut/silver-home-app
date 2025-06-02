@@ -5,22 +5,17 @@
 export const config = {
   dynamic: 'force-dynamic'
 };
-  
-// Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
-// 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-
-
-;
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthWrapper from '@/components/AuthWrapper';
 import { useAppData } from '@/contexts/AppContext';
 import { EmergencyCall, getDataFromStorage, saveDataToStorage } from '@/data/models';
 import { FaArrowLeft, FaExclamationTriangle, FaCheck, FaPhoneAlt, FaMapMarkerAlt, FaUserCircle, FaCalendarAlt, FaEye } from 'react-icons/fa';
 
-export default function EmergencyManagement() {
+function EmergencyContent() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { data } = useAppData();
@@ -30,26 +25,6 @@ export default function EmergencyManagement() {
   const [selectedCall, setSelectedCall] = useState<EmergencyCall | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolutionNote, setResolutionNote] = useState('');
-  
-  // 관리자 권한 확인 및 리디렉션
-  useEffect(() => {
-    // 브라우저 환경에서만 실행
-    if (typeof window !== 'undefined') {
-      try {
-        if (!user) {
-          router.push('/login');
-          return;
-        }
-        
-        if (!isAdmin()) {
-          router.push('/dashboard');
-          return;
-        }
-      } catch (error) {
-        console.error('관리자 페이지 접근 오류:', error);
-      }
-    }
-  }, [user, router, isAdmin]);
   
   // 긴급 호출 데이터 로드
   useEffect(() => {
@@ -73,6 +48,9 @@ export default function EmergencyManagement() {
     if (!selectedCall || !resolutionNote.trim()) return;
     
     try {
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') return;
+      
       // 로컬 스토리지에서 데이터 가져오기
       const appData = getDataFromStorage();
       
@@ -133,15 +111,6 @@ export default function EmergencyManagement() {
       return `${minutes}분 전`;
     }
   };
-  
-  // 권한 없으면 로딩 표시
-  if (!user || !isAdmin()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -424,5 +393,14 @@ export default function EmergencyManagement() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// 인증된 관리자만 접근 가능한 긴급 상황 관리 페이지
+export default function EmergencyManagement() {
+  return (
+    <AuthWrapper requiredRole="admin">
+      <EmergencyContent />
+    </AuthWrapper>
   );
 }

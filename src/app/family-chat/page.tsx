@@ -5,12 +5,6 @@
 export const config = {
   dynamic: 'force-dynamic'
 };
-  
-// Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
-// 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-
-
-;
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';

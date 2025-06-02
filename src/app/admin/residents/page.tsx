@@ -1,16 +1,9 @@
 'use client'
 
 // Next.js 15.3.3 호환성을 위한 페이지 설정
-// 페이지 구성 오류를 방지하기 위해 객체 형태로 내보내기
 export const config = {
   dynamic: 'force-dynamic'
 };
-  
-// Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
-// 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-
-
-;
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,8 +12,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppContext';
 import { User, getDataFromStorage, saveDataToStorage } from '@/data/models';
 import { FaArrowLeft, FaSearch, FaUserPlus, FaEdit, FaTrash, FaCheckCircle, FaTimesCircle, FaEllipsisH } from 'react-icons/fa';
+import AuthWrapper from '@/components/AuthWrapper';
 
-export default function ResidentsManagement() {
+// 실제 입주자 관리 컨텐츠 컴포넌트
+function ResidentsContent() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { data } = useAppData();
@@ -33,148 +28,188 @@ export default function ResidentsManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // 관리자 권한 확인 및 리디렉션
-  useEffect(() => {
-    // 브라우저 환경에서만 실행
-    if (typeof window !== 'undefined') {
-      try {
-        if (!user) {
-          router.push('/login');
-          return;
-        }
-        
-        if (!isAdmin()) {
-          router.push('/dashboard');
-          return;
-        }
-      } catch (error) {
-        console.error('관리자 페이지 접근 오류:', error);
-      }
-    }
-  }, [user, router, isAdmin]);
-  
   // 사용자 데이터 로드
   useEffect(() => {
-    if (!data || !data.users) return;
+    if (!data) return;
+    loadUsers();
     
-    // 입주자 및 가족 회원 필터링
-    const allResidents = data.users.filter(u => u.role === 'resident' || u.role === 'family');
-    setResidents(allResidents);
-    
-    // 신청 데이터 필터링 (실제로는 별도 API 필요)
-    // 임시 데이터로 대체
-    const pendingApplications = [
-      {
-        id: 'app-001',
-        name: '김신청',
-        password: 'password',
-        role: 'resident' as 'resident',
-        phone: '010-1234-5678',
-        address: '서울시 강남구',
-        birthdate: '1945-05-15',
-        applicationStatus: 'pending',
-        applicationDate: '2025-05-20T09:30:00Z'
-      },
-      {
-        id: 'app-002',
-        name: '박대기',
-        password: 'password',
-        role: 'family' as 'family',
-        phone: '010-8765-4321',
-        address: '서울시 송파구',
-        applicationStatus: 'pending',
-        applicationDate: '2025-05-22T14:15:00Z',
-        relatedResident: '홍길동'
-      }
-    ];
-    setApplications(pendingApplications);
-  }, [data]);
+    // TODO: 실제 API 연동 시 제거할 더미 데이터
+    if (applications.length === 0) {
+      // 더미 신청 데이터
+      const pendingApplications = [
+        {
+          id: 'app-001',
+          name: '김신청',
+          email: 'app1@example.com',
+          password: 'password',
+          role: 'resident' as 'resident',
+          phone: '010-1234-5678',
+          address: '서울시 강남구',
+          status: 'pending' as 'pending',
+          createdAt: '2025-05-20T10:30:00Z'
+        },
+        {
+          id: 'app-002',
+          name: '박대기',
+          email: 'app2@example.com',
+          password: 'password',
+          role: 'family' as 'family',
+          phone: '010-8765-4321',
+          address: '서울시 송파구',
+          status: 'pending' as 'pending',
+          createdAt: '2025-05-22T14:15:00Z',
+          relatedResident: '홍길동'
+        }
+      ];
+      setApplications(pendingApplications);
+    }
+  }, [data, applications.length]);
   
   // 검색 필터링 적용
   const filteredResidents = residents?.filter(resident => {
     if (!resident) return false;
     
     const matchesSearch = resident.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          resident.id?.toLowerCase().includes(searchTerm.toLowerCase());
+                          resident.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = filterRole === 'all' || resident.role === filterRole;
     
     return matchesSearch && matchesRole;
   }) || [];
   
-  // 입주 신청 승인 처리
-  const handleApproveApplication = (application: User) => {
-    // 실제로는 API 호출 필요
+  // 신청 승인
+  const approveApplication = (applicationId: string) => {
     try {
-      // 로컬 스토리지에서 데이터 가져오기
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') return;
+      
       const appData = getDataFromStorage();
+      const userToApprove = appData.users.find((u: User) => u.id === applicationId);
       
-      // 승인된 사용자 추가
-      const approvedUser = {
-        ...application,
-        role: application.role || 'resident',
-        password: application.password || 'password123',
-        applicationDate: application.applicationDate || new Date().toISOString(),
-        status: 'approved' as 'approved'
-      };
-      
-      // family 유형이면 relatedResident 필드 확인
-      if (application.role === 'family') {
-        approvedUser.relatedResident = application.relatedResident || '';
-        // 호환성을 위해 residentId도 동일하게 설정
-        approvedUser.residentId = application.relatedResident || '';
+      if (userToApprove) {
+        userToApprove.status = 'approved';
+        userToApprove.approvedAt = new Date().toISOString();
+        userToApprove.approvedBy = user?.id || 'unknown';
+        
+        saveDataToStorage(appData);
+        loadUsers();
+        
+        alert('신청이 승인되었습니다.');
       }
-      
-      appData.users.push(approvedUser);
-      
-      // applications 배열에서 승인된 신청 제거
-      if (Array.isArray(appData.applications)) {
-        appData.applications = appData.applications.filter(app => app?.id !== application?.id);
-      }
-      
-      // 데이터 저장
-      saveDataToStorage(appData);
-      
-      // UI 업데이트
-      setApplications(prev => prev.filter(app => app?.id !== application?.id));
-      setResidents(prev => [...prev, approvedUser]);
-      
-      alert(`${application?.name || '사용자'}님의 입주 신청이 승인되었습니다.`);
     } catch (err) {
-      console.error('입주 신청 승인 오류:', err);
+      console.error('신청 승인 오류:', err);
       alert('처리 중 오류가 발생했습니다.');
     }
   };
   
-  // 입주 신청 거부 처리
-  const handleRejectApplication = (application: User) => {
-    // 실제로는 API 호출 필요
+  // 신청 거부
+  const rejectApplication = (applicationId: string) => {
     try {
-      // 로컬 스토리지에서 데이터 가져오기
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') return;
+      
       const appData = getDataFromStorage();
+      const userToReject = appData.users.find((u: User) => u.id === applicationId);
       
-      // 신청 목록에서 해당 신청 제거 (실제로는 상태 변경)
-      // UI 업데이트
-      setApplications(prev => prev.filter(app => app?.id !== application?.id));
-      
-      // 데이터 저장
-      saveDataToStorage(appData);
-      
-      alert(`${application?.name || '신청자'}님의 입주 신청이 거부되었습니다.`);
+      if (userToReject) {
+        userToReject.status = 'rejected';
+        userToReject.rejectedAt = new Date().toISOString();
+        userToReject.rejectedBy = user?.id || 'unknown';
+        
+        saveDataToStorage(appData);
+        loadUsers();
+        
+        alert('신청이 거부되었습니다.');
+      }
     } catch (err) {
-      console.error('입주 신청 거부 오류:', err);
+      console.error('신청 거부 오류:', err);
       alert('처리 중 오류가 발생했습니다.');
     }
   };
   
-  // 권한 없으면 로딩 표시
-  if (!user || !isAdmin()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
+  // 사용자 삭제
+  const deleteUser = (userId: string) => {
+    try {
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') return;
+      
+      const appData = getDataFromStorage();
+      
+      // 해당 사용자 제거
+      appData.users = appData.users.filter((u: User) => u.id !== userId);
+      
+      // 관련 데이터 제거 (필요한 경우)
+      
+      saveDataToStorage(appData);
+      loadUsers();
+      
+      alert('사용자가 삭제되었습니다.');
+    } catch (err) {
+      console.error('사용자 삭제 오류:', err);
+      alert('처리 중 오류가 발생했습니다.');
+    }
+  };
+  
+  // 사용자 정보 업데이트
+  const updateUserInfo = () => {
+    if (!selectedUser) return;
+    
+    try {
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') return;
+      
+      const appData = getDataFromStorage();
+      const userToUpdate = appData.users.find((u: User) => u.id === selectedUser.id);
+      
+      if (userToUpdate) {
+        // 선택된 사용자 정보로 업데이트
+        Object.assign(userToUpdate, selectedUser);
+        
+        saveDataToStorage(appData);
+        loadUsers();
+        setIsModalOpen(false);
+        
+        alert('사용자 정보가 업데이트되었습니다.');
+      }
+    } catch (err) {
+      console.error('사용자 정보 업데이트 오류:', err);
+      alert('처리 중 오류가 발생했습니다.');
+    }
+  };
+  
+  // 사용자 데이터 로드
+  const loadUsers = () => {
+    try {
+      // 브라우저 환경인지 확인
+      if (typeof window === 'undefined') return;
+      
+      const appData = getDataFromStorage();
+      
+      // 전체 사용자
+      setResidents(appData.users.filter((u: User) => 
+        u.status === 'approved' && 
+        (filterRole === 'all' || u.role === filterRole) &&
+        (searchTerm === '' || 
+          u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+      ));
+      
+      // 승인 대기 중인 신청
+      setApplications(appData.users.filter((u: User) => 
+        u.status === 'pending' &&
+        (searchTerm === '' || 
+          u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+      ));
+    } catch (err) {
+      console.error('사용자 데이터 로드 오류:', err);
+    }
+  };
+  
+  // 필터 변경 시 사용자 데이터 새로 로드
+  useEffect(() => {
+    loadUsers();
+  }, [searchTerm, filterRole]);
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -197,7 +232,7 @@ export default function ResidentsManagement() {
               onClick={() => setActiveTab('residents')}
               className={`py-4 px-1 border-b-2 font-medium text-lg ${
                 activeTab === 'residents'
-                  ? 'border-red-500 text-red-600'
+                  ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -207,11 +242,11 @@ export default function ResidentsManagement() {
               onClick={() => setActiveTab('applications')}
               className={`py-4 px-1 border-b-2 font-medium text-lg ${
                 activeTab === 'applications'
-                  ? 'border-red-500 text-red-600'
+                  ? 'border-indigo-500 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              입주 신청
+              신청 목록
               {applications.length > 0 && (
                 <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800">
                   {applications.length}
@@ -221,197 +256,184 @@ export default function ResidentsManagement() {
           </div>
         </div>
         
-        {activeTab === 'residents' ? (
-          <div>
-            {/* 검색 및 필터 */}
-            <div className="flex flex-col sm:flex-row justify-between mb-6">
-              <div className="relative mb-4 sm:mb-0 sm:w-72">
+        {/* 검색 및 필터링 */}
+        {activeTab === 'residents' && (
+          <div className="mb-6 flex flex-wrap items-center justify-between">
+            <div className="w-full md:w-auto mb-4 md:mb-0">
+              <div className="relative rounded-md shadow-sm">
                 <input
                   type="text"
-                  placeholder="이름 또는 ID 검색"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="이름, 이메일로 검색..."
+                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-4 py-2 sm:text-sm border-gray-300 rounded-md"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaSearch className="text-gray-400" />
                 </div>
               </div>
-              
-              <div className="flex space-x-2">
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value as 'all' | 'resident' | 'family')}
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  <option value="all">전체</option>
-                  <option value="resident">입주자</option>
-                  <option value="family">가족</option>
-                </select>
-                
-                <button
-                  onClick={() => router.push('/admin/residents/new')}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                >
-                  <FaUserPlus className="mr-2" />
-                  새 입주자 등록
-                </button>
-              </div>
             </div>
             
-            {/* 입주자 목록 테이블 */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      이름
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      구분
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      연락처
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      생년월일
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      관리
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredResidents.length > 0 ? (
-                    filteredResidents.map((resident) => (
-                      <tr key={resident?.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{resident?.name || '알 수 없음'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{resident?.id || '-'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            resident?.role === 'resident'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {resident?.role === 'resident' ? '입주자' : '가족'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {resident?.phone || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {resident?.birthdate || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => {
-                              if (resident) {
-                                setSelectedUser(resident);
-                                setIsModalOpen(true);
-                              }
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <FaEdit className="inline mr-2" />
-                            관리
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                        {searchTerm 
-                          ? '검색 결과가 없습니다.' 
-                          : '등록된 입주자가 없습니다.'}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="w-full md:w-auto flex items-center space-x-4">
+              <label htmlFor="role-filter" className="block text-sm font-medium text-gray-700">
+                역할:
+              </label>
+              <select
+                id="role-filter"
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value as any)}
+                className="focus:ring-indigo-500 focus:border-indigo-500 block w-full py-2 pl-3 pr-10 text-base border-gray-300 rounded-md"
+              >
+                <option value="all">전체</option>
+                <option value="resident">입주자</option>
+                <option value="family">가족</option>
+              </select>
+              
+              <button
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={() => {
+                  // 신규 사용자 추가 모달 (미구현)
+                  alert('신규 사용자 추가 기능 준비 중입니다.');
+                }}
+              >
+                <FaUserPlus className="mr-2" />
+                신규 추가
+              </button>
             </div>
           </div>
-        ) : (
-          <div>
-            {/* 입주 신청 목록 */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              {applications.length > 0 ? (
-                <div className="divide-y divide-gray-200">
-                  {applications.map((application) => (
-                    <div key={application?.id} className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-bold">{application?.name || '신청자'}</h3>
-                          <p className="text-gray-600 mb-2">
-                            {application?.role === 'resident' ? '입주자' : '가족 회원'} 신청
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="text-gray-500">신청 일시: </span>
-                              <span>{new Date(application?.applicationDate || '').toLocaleString()}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">연락처: </span>
-                              <span>{application?.phone || '-'}</span>
-                            </div>
-                            {application?.address && (
-                              <div className="md:col-span-2">
-                                <span className="text-gray-500">주소: </span>
-                                <span>{application?.address}</span>
-                              </div>
-                            )}
-                            {application?.birthdate && (
-                              <div>
-                                <span className="text-gray-500">생년월일: </span>
-                                <span>{application?.birthdate}</span>
-                              </div>
-                            )}
-                            {application?.relatedResident && (
-                              <div>
-                                <span className="text-gray-500">관련 입주자: </span>
-                                <span>{application?.relatedResident}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApproveApplication(application)}
-                            className="flex items-center px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                          >
-                            <FaCheckCircle className="mr-1" />
-                            승인
-                          </button>
-                          <button
-                            onClick={() => handleRejectApplication(application)}
-                            className="flex items-center px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                          >
-                            <FaTimesCircle className="mr-1" />
-                            거부
-                          </button>
-                        </div>
+        )}
+        
+        {/* 입주자 목록 */}
+        {activeTab === 'residents' && (
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            {filteredResidents.length > 0 ? (
+              <ul className="divide-y divide-gray-200">
+                {filteredResidents.map((resident) => (
+                  <li key={resident.id} className="px-6 py-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">{resident.name}</h3>
+                      <div className="mt-1 flex items-center text-sm text-gray-500">
+                        <span className="mr-4">{resident.email}</span>
+                        <span>{resident.phone}</span>
+                      </div>
+                      <div className="mt-1 text-sm text-gray-500">
+                        <span className="mr-4">{resident.address}</span>
+                        <span 
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            resident.role === 'resident' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {resident.role === 'resident' ? '입주자' : '가족'}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 text-center text-gray-500">
-                  대기 중인 입주 신청이 없습니다.
-                </div>
-              )}
-            </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedUser(resident);
+                          setIsModalOpen(true);
+                        }}
+                        className="p-2 text-indigo-600 hover:text-indigo-900"
+                        title="편집"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                            deleteUser(resident.id);
+                          }
+                        }}
+                        className="p-2 text-red-600 hover:text-red-900"
+                        title="삭제"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-12 text-center">
+                <p className="text-gray-500">
+                  {searchTerm || filterRole !== 'all'
+                    ? '검색 조건에 맞는 입주자가 없습니다.'
+                    : '등록된 입주자가 없습니다.'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* 신청 목록 */}
+        {activeTab === 'applications' && (
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            {applications.length > 0 ? (
+              <ul className="divide-y divide-gray-200">
+                {applications.map((application) => (
+                  <li key={application.id} className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {application.name}
+                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            대기중
+                          </span>
+                        </h3>
+                        <div className="mt-1 flex items-center text-sm text-gray-500">
+                          <span className="mr-4">{application.email}</span>
+                          <span>{application.phone}</span>
+                        </div>
+                        <div className="mt-1 text-sm text-gray-500">
+                          <span className="mr-4">{application.address}</span>
+                          <span 
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              application.role === 'resident' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {application.role === 'resident' ? '입주자' : '가족'}
+                          </span>
+                        </div>
+                        {application.relatedResident && (
+                          <div className="mt-1 text-sm text-gray-500">
+                            <span>연관 입주자: {application.relatedResident}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => approveApplication(application.id)}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          <FaCheckCircle className="mr-1" />
+                          승인
+                        </button>
+                        <button
+                          onClick={() => rejectApplication(application.id)}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <FaTimesCircle className="mr-1" />
+                          거부
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-12 text-center">
+                <p className="text-gray-500">처리 대기 중인 신청이 없습니다.</p>
+              </div>
+            )}
           </div>
         )}
       </main>
       
-      {/* 사용자 상세 모달 (실제 구현 시 별도 컴포넌트로 분리) */}
+      {/* 사용자 정보 수정 모달 */}
       {isModalOpen && selectedUser && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -423,25 +445,70 @@ export default function ResidentsManagement() {
               <div className="sm:flex sm:items-start">
                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    {selectedUser?.name || '사용자'} 정보 관리
+                    사용자 정보 수정
                   </h3>
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500 mb-4">
-                      이 기능은 데모 버전에서는 제한되어 있습니다.
-                    </p>
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm text-yellow-700">
-                            실제 애플리케이션에서는 이 모달에서 사용자 정보 수정, 비밀번호 초기화, 입주자 상태 변경 등의 기능이 제공됩니다.
-                          </p>
-                        </div>
-                      </div>
+                  <div className="mt-4 space-y-4">
+                    <div>
+                      <label htmlFor="user-name" className="block text-sm font-medium text-gray-700">
+                        이름
+                      </label>
+                      <input
+                        type="text"
+                        id="user-name"
+                        value={selectedUser.name || ''}
+                        onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
+                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="user-email" className="block text-sm font-medium text-gray-700">
+                        이메일
+                      </label>
+                      <input
+                        type="email"
+                        id="user-email"
+                        value={selectedUser.email || ''}
+                        onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
+                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="user-phone" className="block text-sm font-medium text-gray-700">
+                        전화번호
+                      </label>
+                      <input
+                        type="text"
+                        id="user-phone"
+                        value={selectedUser.phone || ''}
+                        onChange={(e) => setSelectedUser({...selectedUser, phone: e.target.value})}
+                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="user-address" className="block text-sm font-medium text-gray-700">
+                        주소
+                      </label>
+                      <input
+                        type="text"
+                        id="user-address"
+                        value={selectedUser.address || ''}
+                        onChange={(e) => setSelectedUser({...selectedUser, address: e.target.value})}
+                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="user-role" className="block text-sm font-medium text-gray-700">
+                        역할
+                      </label>
+                      <select
+                        id="user-role"
+                        value={selectedUser.role || 'resident'}
+                        onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value as 'resident' | 'family'})}
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="resident">입주자</option>
+                        <option value="family">가족</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -449,10 +516,20 @@ export default function ResidentsManagement() {
               <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                 <button
                   type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-                  onClick={() => setIsModalOpen(false)}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={updateUserInfo}
                 >
-                  닫기
+                  저장
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedUser(null);
+                  }}
+                >
+                  취소
                 </button>
               </div>
             </div>
@@ -466,5 +543,14 @@ export default function ResidentsManagement() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// 인증된 관리자만 접근 가능한 입주자 관리 페이지
+export default function ResidentsManagement() {
+  return (
+    <AuthWrapper requiredRole="admin">
+      <ResidentsContent />
+    </AuthWrapper>
   );
 }

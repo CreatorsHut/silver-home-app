@@ -4,6 +4,7 @@
 export interface User {
   id: string;
   name: string;
+  email: string;
   role: 'admin' | 'resident' | 'family';
   password: string;
   phone: string; // 전화번호 추가
@@ -15,6 +16,10 @@ export interface User {
   healthData?: HealthData;
   applicationDate?: string; // 입주 신청일
   status?: 'pending' | 'approved' | 'rejected';
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
 }
 
 // 비상 연락처 타입
@@ -297,6 +302,7 @@ export const initialData: AppData = {
     {
       id: "admin-1",
       name: "관리자",
+      email: "admin@silverhome.kr",
       password: "admin123",
       role: "admin",
       phone: "010-1234-5678",
@@ -305,6 +311,7 @@ export const initialData: AppData = {
     {
       id: "resident-1",
       name: "홍길동",
+      email: "hong@silverhome.kr",
       password: "resident123",
       role: "resident",
       phone: "010-8765-4321",
@@ -314,6 +321,7 @@ export const initialData: AppData = {
     {
       id: "family-1",
       name: "김철수",
+      email: "kim@gmail.com",
       password: "family123",
       role: "family",
       phone: "010-2222-3333",

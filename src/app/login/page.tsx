@@ -5,15 +5,12 @@
 export const config = {
   dynamic: 'force-dynamic'
 };
-  
+
 // Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
 // 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
 
-
-;
-
-import { useState } from 'react';
-// SSR 안전성을 위해 router 제거
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaUser, FaLock } from 'react-icons/fa';
@@ -22,8 +19,19 @@ export default function Login() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  // router 제거
+  const router = useRouter();
   const { login } = useAuth();
+  
+  // 이미 로그인되어 있으면 대시보드로 리디렉션
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('silverHomeUser');
+      if (storedUser) {
+        console.log('이미 로그인되어 있습니다.');
+        router.push('/dashboard');
+      }
+    }
+  }, [router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +43,19 @@ export default function Login() {
       return;
     }
     
-    // 로그인 시도
-    const success = login(id, password);
-    
-    if (success) {
-      // 로그인 성공 시 대시보드로 이동 (SSR 안전하게 수정)
-      if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
+    try {
+      // 로그인 시도
+      const success = login(id, password);
+      
+      if (success) {
+        console.log('로그인 성공, 대시보드로 이동');
+        router.push('/dashboard');
+      } else {
+        setError('아이디 또는 비밀번호가 올바르지 않습니다.');
       }
-    } else {
-      setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+    } catch (err) {
+      console.error('로그인 오류:', err);
+      setError('로그인 처리 중 오류가 발생했습니다.');
     }
   };
   

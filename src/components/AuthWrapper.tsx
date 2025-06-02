@@ -18,41 +18,55 @@ export default function AuthWrapper({ children, requiredRole }: AuthWrapperProps
   useEffect(() => {
     // 브라우저 환경에서만 실행
     if (typeof window !== 'undefined') {
-      // 먼저 로딩 상태를 true로 설정
-      setIsLoading(true);
-      
-      // 사용자가 로그인하지 않은 경우
-      if (!user) {
-        console.log('로그인 상태 아님: 로그인 페이지로 리디렉션');
-        router.push('/login');
-        return;
-      }
-
-      // 특정 역할이 필요한 경우 권한 확인
-      if (requiredRole) {
-        let hasRequiredRole = false;
+      const checkAuth = () => {
+        // 먼저 로딩 상태를 true로 설정
+        setIsLoading(true);
         
-        if (requiredRole === 'admin' && isAdmin()) {
-          hasRequiredRole = true;
-        } else if (requiredRole === 'resident' && isResident()) {
-          hasRequiredRole = true;
-        } else if (requiredRole === 'family' && isFamily()) {
-          hasRequiredRole = true;
-        }
+        // 현재 경로가 로그인 페이지일 경우 리디렉션 방지
+        const currentPath = window.location.pathname;
+        const isLoginPage = currentPath === '/login';
         
-        if (!hasRequiredRole) {
-          console.log(`필요한 권한 없음(${requiredRole}): 대시보드로 리디렉션`);
-          router.push('/dashboard');
+        // 사용자가 로그인하지 않은 경우
+        if (!user) {
+          console.log('로그인 상태 아님:', currentPath);
+          
+          // 로그인 페이지가 아닐 경우에만 리디렉션
+          if (!isLoginPage) {
+            console.log('로그인 페이지로 리디렉션');
+            window.location.href = '/login';
+          }
           return;
         }
-      }
+
+        // 특정 역할이 필요한 경우 권한 확인
+        if (requiredRole) {
+          let hasRequiredRole = false;
+          
+          if (requiredRole === 'admin' && isAdmin()) {
+            hasRequiredRole = true;
+          } else if (requiredRole === 'resident' && isResident()) {
+            hasRequiredRole = true;
+          } else if (requiredRole === 'family' && isFamily()) {
+            hasRequiredRole = true;
+          }
+          
+          if (!hasRequiredRole) {
+            console.log(`필요한 권한 없음(${requiredRole}): 대시보드로 리디렉션`);
+            window.location.href = '/dashboard';
+            return;
+          }
+        }
+        
+        // 인증 및 권한 확인 모두 통과
+        console.log('인증 성공: 컨텐츠 렌더링');
+        setIsAuthorized(true);
+        setIsLoading(false);
+      };
       
-      // 인증 및 권한 확인 모두 통과
-      console.log('인증 성공: 컨텐츠 렌더링');
-      setIsAuthorized(true);
-      setIsLoading(false);
+      // 실행
+      checkAuth();
     }
-  }, [user, router, isAdmin, isResident, isFamily, requiredRole]);
+  }, [user, isAdmin, isResident, isFamily, requiredRole]);
 
   // 로딩 중일 때
   if (isLoading) {

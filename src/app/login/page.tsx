@@ -22,16 +22,27 @@ export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
   
-  // 이미 로그인되어 있으면 대시보드로 리디렉션
+  // 이미 로그인되어 있는지 한 번만 확인
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('silverHomeUser');
-      if (storedUser) {
-        console.log('이미 로그인되어 있습니다.');
-        router.push('/dashboard');
+    // 이 플래그는 한 번만 실행되도록 함
+    let isRedirecting = false;
+    
+    if (typeof window !== 'undefined' && !isRedirecting) {
+      try {
+        const storedUser = localStorage.getItem('silverHomeUser');
+        if (storedUser) {
+          console.log('이미 로그인되어 있습니다.');
+          isRedirecting = true;
+          // 현재 URL이 로그인 페이지일 때만 리디렉션
+          if (window.location.pathname === '/login') {
+            router.push('/dashboard');
+          }
+        }
+      } catch (err) {
+        console.error('로그인 상태 확인 오류:', err);
       }
     }
-  }, [router]);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

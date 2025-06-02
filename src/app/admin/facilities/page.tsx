@@ -5,12 +5,9 @@
 export const config = {
   dynamic: 'force-dynamic'
 };
-  
+
 // Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
 // 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-
-
-;
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -18,35 +15,28 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Facility } from '@/data/models';
 import { FaArrowLeft, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import AuthWrapper from '@/components/AuthWrapper';
 
-export default function FacilitiesManagement() {
+// 시설 관리 컨텐츠 컴포넌트
+function FacilitiesContent() {
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // 관리자 권한 확인 및 리디렉션
+  // 페이지 로드 완료 로깅
   useEffect(() => {
-    // 브라우저 환경에서만 실행
     if (typeof window !== 'undefined') {
+      console.log('Facilities 페이지 로드 완료');
+      
       try {
-        if (!user) {
-          router.push('/login');
-          return;
-        }
-        
-        if (!isAdmin()) {
-          router.push('/dashboard');
-          return;
-        }
-        
         // 시설 데이터 로드
         loadFacilities();
       } catch (error) {
-        console.error('관리자 페이지 접근 오류:', error);
+        console.error('시설 데이터 로드 오류:', error);
       }
     }
-  }, [user, router, isAdmin]);
+  }, []);
   
   // 시설 데이터 로드
   const loadFacilities = () => {
@@ -67,7 +57,7 @@ export default function FacilitiesManagement() {
   };
 
   // 로딩 화면
-  if (loading || !user || !isAdmin()) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
@@ -148,5 +138,14 @@ export default function FacilitiesManagement() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// AuthWrapper로 감싸서 admin 권한 확인
+export default function FacilitiesManagement() {
+  return (
+    <AuthWrapper requiredRole="admin">
+      <FacilitiesContent />
+    </AuthWrapper>
   );
 }

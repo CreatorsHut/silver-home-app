@@ -18,37 +18,39 @@ export default function AuthWrapper({ children, requiredRole }: AuthWrapperProps
   useEffect(() => {
     // 브라우저 환경에서만 실행
     if (typeof window !== 'undefined') {
-      // 인증 상태 확인 시간을 주기 위한 지연
-      const timer = setTimeout(() => {
-        // 사용자가 로그인하지 않은 경우
-        if (!user) {
-          router.push('/login');
-          return;
-        }
+      // 먼저 로딩 상태를 true로 설정
+      setIsLoading(true);
+      
+      // 사용자가 로그인하지 않은 경우
+      if (!user) {
+        console.log('로그인 상태 아님: 로그인 페이지로 리디렉션');
+        router.push('/login');
+        return;
+      }
 
-        // 특정 역할이 필요한 경우 권한 확인
-        if (requiredRole) {
-          let hasRequiredRole = false;
-          
-          if (requiredRole === 'admin' && isAdmin()) {
-            hasRequiredRole = true;
-          } else if (requiredRole === 'resident' && isResident()) {
-            hasRequiredRole = true;
-          } else if (requiredRole === 'family' && isFamily()) {
-            hasRequiredRole = true;
-          }
-          
-          if (!hasRequiredRole) {
-            router.push('/dashboard');
-            return;
-          }
+      // 특정 역할이 필요한 경우 권한 확인
+      if (requiredRole) {
+        let hasRequiredRole = false;
+        
+        if (requiredRole === 'admin' && isAdmin()) {
+          hasRequiredRole = true;
+        } else if (requiredRole === 'resident' && isResident()) {
+          hasRequiredRole = true;
+        } else if (requiredRole === 'family' && isFamily()) {
+          hasRequiredRole = true;
         }
         
-        setIsAuthorized(true);
-        setIsLoading(false);
-      }, 500); // 500ms 지연
+        if (!hasRequiredRole) {
+          console.log(`필요한 권한 없음(${requiredRole}): 대시보드로 리디렉션`);
+          router.push('/dashboard');
+          return;
+        }
+      }
       
-      return () => clearTimeout(timer);
+      // 인증 및 권한 확인 모두 통과
+      console.log('인증 성공: 컨텐츠 렌더링');
+      setIsAuthorized(true);
+      setIsLoading(false);
     }
   }, [user, router, isAdmin, isResident, isFamily, requiredRole]);
 

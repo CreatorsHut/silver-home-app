@@ -1,27 +1,18 @@
 'use client'
 
 // Next.js 15.3.3 호환성을 위한 페이지 설정
-// 페이지 구성 오류를 방지하기 위해 객체 형태로 내보내기
 export const config = {
   dynamic: 'force-dynamic'
-};;
-import { useRouter } from 'next/navigation';
-import nextDynamic from 'next/dynamic';
-
-// Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
-// 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
-
-
-
-// 서버에서는 실행되지 않고, 클라이언트에서만 실행되도록 설정
+};
 
 import { useState, useEffect } from 'react';
-import AuthWrapper from '@/components/AuthWrapper';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppContext';
 import { Notice, getDataFromStorage, saveDataToStorage } from '@/data/models';
 import { FaArrowLeft, FaPlus, FaEdit, FaTrash, FaSearch, FaThumbtack, FaRegCalendarAlt } from 'react-icons/fa';
+import AuthWrapper from '@/components/AuthWrapper';
 
 function NoticesContent() {
   const { user, isAdmin } = useAuth();
@@ -53,14 +44,12 @@ function NoticesContent() {
   // 카테고리 목록
   const categories = ['공지', '행사', '안내', '긴급', '건강', '기타'];
   
-  // 관리자 권한 확인
+  // 관리자 페이지 로드 완료 로깅
   useEffect(() => {
-    // AuthWrapper가 인증을 처리하고 isAdmin 값을 확인
-    if (typeof window !== 'undefined' && user && !isAdmin()) {
-      window.location.href = '/dashboard';
-      return;
+    if (typeof window !== 'undefined') {
+      console.log('Notice 페이지 로드 완료');
     }
-  }, [user, isAdmin]);
+  }, []);
   
   // 공지사항 데이터 로드
   useEffect(() => {
@@ -593,5 +582,11 @@ function NoticesContent() {
   );
 }
 
-// 서버 사이드 렌더링 설정 - 클라이언트 컴포넌트에서는 기본 렌더링 방식만 사용 가능
-// 클라이언트 컴포넌트에서는 metadata 내보내기를 할 수 없어 제거
+// AuthWrapper로 감싸서 admin 권한 확인
+export default function NoticesManagement() {
+  return (
+    <AuthWrapper requiredRole="admin">
+      <NoticesContent />
+    </AuthWrapper>
+  );
+}

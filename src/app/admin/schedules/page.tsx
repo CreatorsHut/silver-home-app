@@ -5,42 +5,30 @@
 export const config = {
   dynamic: 'force-dynamic'
 };
-  
+
 // Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
 // 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
 
-
-;
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthWrapper from '@/components/AuthWrapper';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaArrowLeft, FaPlus, FaCalendarAlt } from 'react-icons/fa';
 
-export default function SchedulesManagement() {
+// 일정 관리 컨텐츠 컴포넌트
+function SchedulesContent() {
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   
-  // 권한 확인 및 리디렉션
+  // 페이지 로드 완료 로깅
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
+    if (typeof window !== 'undefined') {
+      console.log('Schedules 페이지 로드 완료');
     }
-    
-    if (!isAdmin()) {
-      router.push('/dashboard');
-    }
-  }, [user, router, isAdmin]);
+  }, []);
   
-  if (!user || !isAdmin()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
+  // AuthWrapper가 인증과 권한 처리를 담당하므로 권한 확인 코드 불필요
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,3 +121,14 @@ export default function SchedulesManagement() {
     </div>
   );
 }
+
+// AuthWrapper로 감싸서 admin 권한 확인
+export default function SchedulesManagement() {
+  return (
+    <AuthWrapper requiredRole="admin">
+      <SchedulesContent />
+    </AuthWrapper>
+  );
+}
+
+// config는 파일 상단에 이미 선언됨

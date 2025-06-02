@@ -1,7 +1,19 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  experimental: {
+    // SSR 문제 해결을 위한 설정
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+    // 정적 내보내기 설정
+    outputFileTracing: true,
+  },
+  // 클라이언트 전용 기능을 서버에서 호출하는 문제 해결
+  compiler: {
+    styledComponents: true,
+  },
+  // 기존 next.config.ts에서 가져온 설정
   eslint: {
     // 빌드 시 ESLint 오류를 무시하여 빌드가 실패하지 않도록 설정
     ignoreDuringBuilds: true,

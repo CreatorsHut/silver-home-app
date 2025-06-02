@@ -1,4 +1,6 @@
 'use client';
+import { useRouter } from 'next/navigation';
+// Next.js 15에서 클라이언트 컴포넌트 내에서 발생하는 generateViewport 호출 오류를 방지하기 위한 설정
 
 import { useState, useEffect } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';

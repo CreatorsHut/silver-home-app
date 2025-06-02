@@ -578,11 +578,5 @@ function NoticesContent() {
   );
 }
 
-// 서버 사이드 렌더링 설정
-export const dynamic = "force-dynamic";
-
-// Next.js 설정 - 서버에서 클라이언트 함수를 호출하지 않도록 설정
-export const metadata = {
-  title: '공지사항 관리 - 실버홈',
-  description: '실버홈 공지사항 관리 페이지입니다.'
-};
+// 서버 사이드 렌더링 설정 - 클라이언트 컴포넌트에서는 기본 렌더링 방식만 사용 가능
+// 클라이언트 컴포넌트에서는 metadata 내보내기를 할 수 없어 제거

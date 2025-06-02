@@ -9,8 +9,7 @@ export const config = {
 // Next.js 15에서 SSR 비활성화 (클라이언트에서만 실행되도록 설정)
 // 이렇게 하면 서버에서 generateViewport 호출하는 문제 방지
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaUser, FaLock } from 'react-icons/fa';
@@ -19,31 +18,9 @@ export default function Login() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();
   const { login } = useAuth();
   
-  // 이미 로그인되어 있는지 한 번만 확인
-  useEffect(() => {
-    // 이 플래그는 한 번만 실행되도록 함
-    let isRedirecting = false;
-    
-    if (typeof window !== 'undefined' && !isRedirecting) {
-      try {
-        const storedUser = localStorage.getItem('silverHomeUser');
-        if (storedUser) {
-          console.log('이미 로그인되어 있습니다.');
-          isRedirecting = true;
-          // 현재 URL이 로그인 페이지일 때만 리디렉션
-          if (window.location.pathname === '/login') {
-            router.push('/dashboard');
-          }
-        }
-      } catch (err) {
-        console.error('로그인 상태 확인 오류:', err);
-      }
-    }
-  }, []);
-
+  // 간단한 유효성 검사 후 로그인 처리
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -60,7 +37,10 @@ export default function Login() {
       
       if (success) {
         console.log('로그인 성공, 대시보드로 이동');
-        router.push('/dashboard');
+        // 클라이언트 사이드 리디렉션 - router 대신 window.location 사용
+        if (typeof window !== 'undefined') {
+          window.location.href = '/dashboard';
+        }
       } else {
         setError('아이디 또는 비밀번호가 올바르지 않습니다.');
       }
@@ -69,6 +49,28 @@ export default function Login() {
       setError('로그인 처리 중 오류가 발생했습니다.');
     }
   };
+  
+  // 이미 로그인되어 있는지 한 번만 확인 (에이지엔트 패턴)
+  if (typeof window !== 'undefined') {
+    try {
+      const storedUser = localStorage.getItem('silverHomeUser');
+      if (storedUser) {
+        console.log('이미 로그인되어 있습니다. 대시보드로 이동합니다.');
+        window.location.href = '/dashboard';
+        // 로딩 메시지 표시
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+            <p className="ml-3 text-lg">로그인 정보 확인 중...</p>
+          </div>
+        );
+      }
+    } catch (err) {
+      console.error('로그인 상태 확인 오류:', err);
+      // 오류 발생 시 로컬스토리지 정리
+      localStorage.removeItem('silverHomeUser');
+    }
+  }
   
   // 테스트 계정 자동 입력
   const fillTestAccount = (role: string) => {
